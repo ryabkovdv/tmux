@@ -2677,6 +2677,10 @@ input_exit_osc(struct input_ctx *ictx)
 	case 133:
 		input_osc_133(ictx, p);
 		break;
+	case 136:
+		if (wp != NULL && *p == '@')
+			notify_pane(p, wp);
+		break;
 	default:
 		log_debug("%s: unknown '%u'", __func__, option);
 		break;
