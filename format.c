@@ -1944,6 +1944,15 @@ format_cb_pane_active(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for pane_app_id. */
+static void *
+format_cb_pane_app_id(struct format_tree *ft)
+{
+	if (ft->wp != NULL)
+		return (xstrdup(ft->wp->base.app_id));
+	return (NULL);
+}
+
 /* Callback for pane_at_left. */
 static void *
 format_cb_pane_at_left(struct format_tree *ft)
@@ -3208,6 +3217,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "pane_active", FORMAT_TABLE_STRING,
 	  format_cb_pane_active
+	},
+	{ "pane_app_id", FORMAT_TABLE_STRING,
+	  format_cb_pane_app_id
 	},
 	{ "pane_at_bottom", FORMAT_TABLE_STRING,
 	  format_cb_pane_at_bottom

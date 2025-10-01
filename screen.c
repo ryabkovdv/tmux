@@ -42,6 +42,7 @@ struct screen_sel {
 /* Entry on title stack. */
 struct screen_title_entry {
 	char				*text;
+	char				*app_id;
 
 	TAILQ_ENTRY(screen_title_entry)	 entry;
 };
@@ -61,6 +62,7 @@ screen_free_titles(struct screen *s)
 
 	while ((title_entry = TAILQ_FIRST(s->titles)) != NULL) {
 		TAILQ_REMOVE(s->titles, title_entry, entry);
+		free(title_entry->app_id);
 		free(title_entry->text);
 		free(title_entry);
 	}
@@ -77,6 +79,7 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 	s->saved_grid = NULL;
 
 	s->title = xstrdup("");
+	s->app_id = xstrdup("");
 	s->titles = NULL;
 	s->path = NULL;
 
@@ -150,6 +153,7 @@ screen_free(struct screen *s)
 	free(s->sel);
 	free(s->tabs);
 	free(s->path);
+	free(s->app_id);
 	free(s->title);
 
 	if (s->write_list != NULL)
@@ -239,14 +243,82 @@ screen_set_cursor_colour(struct screen *s, int colour)
 	s->ccolour = colour;
 }
 
-/* Set screen title. */
+/* Set screen title components from extended title format. */
+static int
+screen_set_title_extended(struct screen *s, const char *title)
+{
+	const char	*split_pos;
+	u_int		 option;
+
+	if (*title != ']')
+		return (0);
+	++title;
+
+	if (*title < '0' || *title > '9')
+		return (0);
+
+	option = 0;
+	while (*title >= '0' && *title <= '9')
+		option = option * 10 + *title++ - '0';
+
+	if (*title != ';')
+		return (0);
+	++title;
+
+	switch (option) {
+	case 0:
+		split_pos = strchr(title, '&');
+		if (split_pos == NULL)
+			return (0);
+		free(s->app_id);
+		free(s->title);
+		s->title = xstrdup(split_pos + 1);
+		s->app_id = xstrndup(title, split_pos - title);
+		return (1);
+	case 1:
+		free(s->title);
+		s->title = xstrdup(title);
+		return (1);
+	case 2:
+		free(s->app_id);
+		s->app_id = xstrdup(title);
+		return (1);
+	default:
+		return (0);
+	}
+}
+
+/* Set screen title components. */
 int
 screen_set_title(struct screen *s, const char *title)
 {
 	if (!utf8_isvalid(title))
 		return (0);
+	if (screen_set_title_extended(s, title))
+		return (1);
+	free(s->app_id);
 	free(s->title);
 	s->title = xstrdup(title);
+	s->app_id = xstrdup("");
+	return (1);
+}
+
+/* Set screen title components (with explicit parameters). */
+int
+screen_set_title_explicit(struct screen *s, const char *title, const char *app_id)
+{
+	if (title != NULL && !utf8_isvalid(title))
+		return (0);
+	if (app_id != NULL && !utf8_isvalid(app_id))
+		return (0);
+	if (title != NULL) {
+		free(s->title);
+		s->title = xstrdup(title);
+	}
+	if (app_id != NULL) {
+		free(s->app_id);
+		s->app_id = xstrdup(app_id);
+	}
 	return (1);
 }
 
@@ -270,6 +342,7 @@ screen_push_title(struct screen *s)
 	}
 	title_entry = xmalloc(sizeof *title_entry);
 	title_entry->text = xstrdup(s->title);
+	title_entry->app_id = xstrdup(s->app_id);
 	TAILQ_INSERT_HEAD(s->titles, title_entry, entry);
 }
 
@@ -287,9 +360,10 @@ screen_pop_title(struct screen *s)
 
 	title_entry = TAILQ_FIRST(s->titles);
 	if (title_entry != NULL) {
-		screen_set_title(s, title_entry->text);
+		screen_set_title_explicit(s, title_entry->text, title_entry->app_id);
 
 		TAILQ_REMOVE(s->titles, title_entry, entry);
+		free(title_entry->app_id);
 		free(title_entry->text);
 		free(title_entry);
 	}
