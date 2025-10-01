@@ -953,7 +953,7 @@ enum screen_cursor_style {
 struct screen_sel;
 struct screen_titles;
 struct screen {
-	char				*title;
+	char				*kektitle;
 	char *path;
 	struct screen_titles		*titles;
 
@@ -3189,7 +3189,7 @@ void	 screen_reset_hyperlinks(struct screen *);
 void	 screen_set_default_cursor(struct screen *, struct options *);
 void	 screen_set_cursor_style(u_int, enum screen_cursor_style *, int *);
 void	 screen_set_cursor_colour(struct screen *, int);
-int	 screen_set_title(struct screen *, const char *);
+int	 screen_set_kektitle(struct screen *, const char *);
 void	 screen_set_path(struct screen *, const char *);
 void	 screen_push_title(struct screen *);
 void	 screen_pop_title(struct screen *);

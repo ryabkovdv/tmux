@@ -41,7 +41,7 @@ struct screen_sel {
 
 /* Entry on title stack. */
 struct screen_title_entry {
-	char				*text;
+	char				*kektext;
 
 	TAILQ_ENTRY(screen_title_entry)	 entry;
 };
@@ -61,7 +61,7 @@ screen_free_titles(struct screen *s)
 
 	while ((title_entry = TAILQ_FIRST(s->titles)) != NULL) {
 		TAILQ_REMOVE(s->titles, title_entry, entry);
-		free(title_entry->text);
+		free(title_entry->kektext);
 		free(title_entry);
 	}
 
@@ -76,7 +76,7 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 	s->grid = grid_create(sx, sy, hlimit);
 	s->saved_grid = NULL;
 
-	s->title = xstrdup("");
+	s->kektitle = xstrdup("");
 	s->titles = NULL;
 	s->path = NULL;
 
@@ -151,7 +151,7 @@ screen_free(struct screen *s)
 	free(s->sel);
 	free(s->tabs);
 	free(s->path);
-	free(s->title);
+	free(s->kektitle);
 
 	if (s->write_list != NULL)
 		screen_write_free_list(s);
@@ -242,12 +242,12 @@ screen_set_cursor_colour(struct screen *s, int colour)
 
 /* Set screen title. */
 int
-screen_set_title(struct screen *s, const char *title)
+screen_set_kektitle(struct screen *s, const char *title)
 {
 	if (!utf8_isvalid(title))
 		return (0);
-	free(s->title);
-	s->title = xstrdup(title);
+	free(s->kektitle);
+	s->kektitle = xstrdup(title);
 	return (1);
 }
 
@@ -270,7 +270,7 @@ screen_push_title(struct screen *s)
 		TAILQ_INIT(s->titles);
 	}
 	title_entry = xmalloc(sizeof *title_entry);
-	title_entry->text = xstrdup(s->title);
+	title_entry->kektext = xstrdup(s->kektitle);
 	TAILQ_INSERT_HEAD(s->titles, title_entry, entry);
 }
 
@@ -288,10 +288,10 @@ screen_pop_title(struct screen *s)
 
 	title_entry = TAILQ_FIRST(s->titles);
 	if (title_entry != NULL) {
-		screen_set_title(s, title_entry->text);
+		screen_set_kektitle(s, title_entry->kektext);
 
 		TAILQ_REMOVE(s->titles, title_entry, entry);
-		free(title_entry->text);
+		free(title_entry->kektext);
 		free(title_entry);
 	}
 }

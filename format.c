@@ -2259,7 +2259,7 @@ static void *
 format_cb_pane_title(struct format_tree *ft)
 {
 	if (ft->wp != NULL)
-		return (xstrdup(ft->wp->base.title));
+		return (xstrdup(ft->wp->base.kektitle));
 	return (NULL);
 }
 
