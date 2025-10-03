@@ -76,7 +76,7 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 	s->grid = grid_create(sx, sy, hlimit);
 	s->saved_grid = NULL;
 
-	s->title = xstrdup("");
+	s->title = xstrdup("&");
 	s->titles = NULL;
 	s->path = NULL;
 
@@ -248,6 +248,78 @@ screen_set_title(struct screen *s, const char *title)
 		return (0);
 	free(s->title);
 	s->title = xstrdup(title);
+	return (1);
+}
+
+/* Update screen title components from extended title format. */
+static int
+screen_update_title_extended(struct screen *s, const char *str)
+{
+	char	*prev_title, *sep;
+	int	 prev_app_id_len;
+	u_int	 option;
+
+	if (*str != ']')
+		return (0);
+	str++;
+
+	if (*str < '0' || *str > '9')
+		return (0);
+
+	option = 0;
+	while (*str >= '0' && *str <= '9')
+		option = option * 10 + *str++ - '0';
+
+	if (*str != ';')
+		return (0);
+	str++;
+
+	switch (option) {
+	case 0:
+		/* Update both components: ]0;app&title */
+		if (strchr(str, '&') == NULL)
+			return (0);
+
+		free(s->title);
+		s->title = xstrdup(str);
+		return (1);
+	case 1:
+		/* Update application ID: ]1;app */
+		if (strchr(str, '&') != NULL)
+			return (0);
+
+		prev_title = s->title;
+		if ((sep = strchr(prev_title, '&')) != NULL)
+			sep++;
+		else
+			sep = prev_title;
+		xasprintf(&s->title, "%s&%s", str, sep);
+		free(prev_title);
+		return (1);
+	case 2:
+		/* Update visible title: ]2;title */
+		prev_title = s->title;
+		prev_app_id_len = 0;
+		if ((sep = strchr(prev_title, '&')) != NULL)
+			prev_app_id_len = sep - prev_title;
+		xasprintf(&s->title, "%.*s&%s", prev_app_id_len, prev_title, str);
+		free(prev_title);
+		return (1);
+	default:
+		return (0);
+	}
+}
+
+/* Update screen title components. */
+int
+screen_update_title(struct screen *s, const char *str)
+{
+	if (!utf8_isvalid(str))
+		return (0);
+	if (screen_update_title_extended(s, str))
+		return (1);
+	free(s->title);
+	xasprintf(&s->title, "&%s", str);
 	return (1);
 }
 

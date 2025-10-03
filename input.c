@@ -2629,7 +2629,7 @@ input_exit_osc(struct input_ctx *ictx)
 	case 2:
 		if (wp != NULL &&
 		    options_get_number(wp->options, "allow-set-title") &&
-		    screen_set_title(sctx->s, p)) {
+		    screen_update_title(sctx->s, p)) {
 			notify_pane("pane-title-changed", wp);
 			server_redraw_window_borders(wp->window);
 			server_status_window(wp->window);
@@ -2711,7 +2711,7 @@ input_exit_apc(struct input_ctx *ictx)
 
 	if (wp != NULL &&
 	    options_get_number(wp->options, "allow-set-title") &&
-	    screen_set_title(sctx->s, ictx->input_buf)) {
+	    screen_update_title(sctx->s, ictx->input_buf)) {
 		notify_pane("pane-title-changed", wp);
 		server_redraw_window_borders(wp->window);
 		server_status_window(wp->window);
