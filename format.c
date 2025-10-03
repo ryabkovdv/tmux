@@ -1959,6 +1959,21 @@ format_cb_pane_active(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for pane_app_id. */
+static void *
+format_cb_pane_app_id(struct format_tree *ft)
+{
+	const char	*sep, *title;
+
+	if (ft->wp != NULL) {
+		title = ft->wp->base.title;
+		if ((sep = strchr(title, '&')) != NULL)
+			return (xstrndup(title, sep - title));
+		return (xstrdup(""));
+	}
+	return (NULL);
+}
+
 /* Callback for pane_at_left. */
 static void *
 format_cb_pane_at_left(struct format_tree *ft)
@@ -2258,8 +2273,14 @@ format_cb_pane_synchronized(struct format_tree *ft)
 static void *
 format_cb_pane_title(struct format_tree *ft)
 {
-	if (ft->wp != NULL)
-		return (xstrdup(ft->wp->base.title));
+	const char	*sep, *title;
+
+	if (ft->wp != NULL) {
+		title = ft->wp->base.title;
+		if ((sep = strchr(title, '&')) != NULL)
+			return (xstrdup(sep + 1));
+		return (xstrdup(title));
+	}
 	return (NULL);
 }
 
@@ -3226,6 +3247,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "pane_active", FORMAT_TABLE_STRING,
 	  format_cb_pane_active
+	},
+	{ "pane_app_id", FORMAT_TABLE_STRING,
+	  format_cb_pane_app_id
 	},
 	{ "pane_at_bottom", FORMAT_TABLE_STRING,
 	  format_cb_pane_at_bottom
